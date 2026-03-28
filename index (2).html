@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rinjani Dawn Adventures - Lombok Pickup Zones</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --rda-dark:   #0f1a12;
+    --rda-green:  #2d6a4f;
+    --rda-lime:   #74c69d;
+    --rda-gold:   #d4a843;
+    --rda-cream:  #f5f0e8;
+    --panel-bg:   rgba(15,26,18,0.97);
+  }
+
+  html, body { height:100%; font-family:"Jost",sans-serif; background:var(--rda-dark); overflow:hidden; }
+  #app { display:flex; height:100vh; width:100vw; }
+
+  #sidebar {
+    width:320px; min-width:320px;
+    background:var(--panel-bg);
+    border-right:1px solid rgba(116,198,157,0.15);
+    display:flex; flex-direction:column;
+    z-index:10; overflow:hidden;
+  }
+
+  .sidebar-header {
+    padding:18px 18px 13px;
+    border-bottom:1px solid rgba(116,198,157,0.12);
+    background:linear-gradient(135deg,rgba(45,106,79,0.45) 0%,transparent 100%);
+  }
+
+  .brand-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .brand-img { width:36px; height:36px; border-radius:7px; overflow:hidden; flex-shrink:0; }
+  .brand-img img { width:100%; height:100%; object-fit:cover; }
+  .brand-name { font-family:"Cormorant Garamond",serif; font-weight:800; font-size:12px; color:#fff; line-height:1.2; }
+  .brand-sub  { font-size:10px; color:var(--rda-lime); font-weight:400; letter-spacing:.08em; text-transform:uppercase; }
+  .sidebar-title { font-family:"Cormorant Garamond",serif; font-weight:700; font-size:16px; color:#fff; margin-bottom:6px; }
+  .sidebar-desc  { font-size:11px; color:rgba(245,240,232,.55); line-height:1.6; }
+
+  .search-wrap { padding:12px 18px; border-bottom:1px solid rgba(116,198,157,0.12); }
+  .section-label { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--rda-lime); font-weight:600; margin-bottom:7px; }
+  .search-container { position:relative; }
+  #pac-input {
+    width:100%; padding:9px 12px 9px 32px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(116,198,157,.2); border-radius:8px;
+    color:#fff; font-family:"Jost",sans-serif; font-size:12px; outline:none; transition:border-color .2s;
+  }
+  #pac-input:focus { border-color:var(--rda-lime); }
+  #pac-input::placeholder { color:rgba(255,255,255,.3); }
+  .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; pointer-events:none; }
+
+  #zone-result { margin-top:9px; padding:10px 12px; border-radius:8px; font-size:12px; display:none; }
+  #zone-result.free    { background:rgba(46,125,50,.18);  border:1px solid rgba(46,125,50,.4);  color:#66bb6a; }
+  #zone-result.paid    { background:rgba(212,168,67,.15); border:1px solid rgba(212,168,67,.4); color:#d4a843; }
+  #zone-result.unknown { background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5); }
+  .zr-name  { font-family:"Cormorant Garamond",serif; font-weight:700; font-size:13px; margin-bottom:2px; }
+  .zr-price { font-size:11px; opacity:.9; }
+  .zr-note  { font-size:10px; margin-top:4px; opacity:.6; font-style:italic; }
+
+  #legend { flex:1; overflow-y:auto; padding:12px 18px; scrollbar-width:thin; scrollbar-color:rgba(116,198,157,.2) transparent; }
+
+  .zone-item { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:8px; cursor:pointer; transition:background .15s; margin-bottom:3px; }
+  .zone-item:hover  { background:rgba(255,255,255,.05); }
+  .zone-item.active { background:rgba(116,198,157,.1); }
+  .zone-swatch { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .zone-info { flex:1; }
+  .zone-name   { font-family:"Cormorant Garamond",serif; font-weight:600; font-size:11px; color:#fff; margin-bottom:1px; }
+  .zone-places { font-size:10px; color:rgba(245,240,232,.4); line-height:1.4; }
+  .zone-price  { font-family:"Cormorant Garamond",serif; font-weight:700; font-size:12px; white-space:nowrap; }
+
+  .landmark-section { margin-top:12px; padding-top:12px; border-top:1px solid rgba(116,198,157,.12); }
+  .lm-item { display:flex; align-items:center; gap:7px; padding:2px 0; font-size:10px; color:rgba(245,240,232,.5); }
+  .lm-icon { font-size:11px; width:15px; text-align:center; }
+
+  .sidebar-footer { padding:10px 18px; border-top:1px solid rgba(116,198,157,.12); font-size:10px; color:rgba(255,255,255,.22); line-height:1.6; }
+  .sidebar-footer a { color:var(--rda-lime); text-decoration:none; opacity:.7; }
+
+  #map { flex:1; height:100%; }
+
+  #sidebar-toggle { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--rda-green); color:#fff; border:none; padding:10px 20px; border-radius:50px; font-family:"Cormorant Garamond",serif; font-weight:700; font-size:12px; cursor:pointer; z-index:100; box-shadow:0 4px 20px rgba(0,0,0,.4); }
+
+  .pac-container { background:#1a2e1f!important; border:1px solid rgba(116,198,157,.2)!important; border-radius:8px!important; margin-top:4px; font-family:"Jost",sans-serif!important; }
+  .pac-item { color:rgba(255,255,255,.7)!important; border-top:1px solid rgba(116,198,157,.08)!important; padding:7px 11px!important; font-size:11px!important; cursor:pointer; }
+  .pac-item:hover { background:rgba(116,198,157,.1)!important; }
+  .pac-item-query { color:#fff!important; font-size:12px!important; }
+  .pac-icon { display:none!important; }
+
+  @media(max-width:768px){
+    #sidebar { position:fixed; left:0; top:0; bottom:0; transform:translateX(-100%); transition:transform .3s ease; z-index:50; width:290px; min-width:290px; }
+    #sidebar.open { transform:translateX(0); }
+    #sidebar-toggle { display:block; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-row">
+        <div class="brand-img"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="RDA"></div>
+        <div>
+          <div class="brand-name">Rinjani Dawn Adventures</div>
+          <div class="brand-sub">Lombok Pickup Zones</div>
+        </div>
+      </div>
+      <div class="sidebar-title">Lombok Pickup &amp; Dropoff Zones</div>
+      <div class="sidebar-desc">Find your zone and check if a pickup or dropoff surcharge applies to your location.<br><br>If your location falls outside our free zone, we are happy to discuss transport options and work with you to find the best solution. Get in touch with our team. We would love to help make your Rinjani adventure as seamless as possible.</div>
+    </div>
+
+    <div class="search-wrap">
+      <div class="section-label">Find Your Location</div>
+      <div class="search-container">
+        <span class="search-icon">📍</span>
+        <input id="pac-input" type="text" placeholder="Type your hotel, villa or area...">
+      </div>
+      <div id="zone-result">
+        <div class="zr-name" id="zr-name"></div>
+        <div class="zr-price" id="zr-price"></div>
+        <div class="zr-note" id="zr-note"></div>
+      </div>
+    </div>
+
+    <div id="legend">
+      <div class="section-label">Transport Zones</div>
+
+      <div class="zone-item" onclick="flyToZone(0)">
+        <div class="zone-swatch" style="background:#2e7d32"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 1 - Free Pickup and Dropoff</div>
+          <div class="zone-places">Most of North and East Lombok</div>
+        </div>
+        <div class="zone-price" style="color:#2e7d32">FREE</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(1)">
+        <div class="zone-swatch" style="background:#0277bd"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 2 - Gili Islands</div>
+          <div class="zone-places">Gili Trawangan, Gili Air, Gili Meno</div>
+        </div>
+        <div class="zone-price" style="color:#0277bd">$30</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(2)">
+        <div class="zone-swatch" style="background:#f9a825"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 3 - South and East Lombok</div>
+          <div class="zone-places">Kuta, Gerupuk, Sengkol, Praya</div>
+        </div>
+        <div class="zone-price" style="color:#f9a825">$20</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(3)">
+        <div class="zone-swatch" style="background:#ef6c00"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 4 - South Coast</div>
+          <div class="zone-places">Blongas Bay, Mawun, Selong Belanak</div>
+        </div>
+        <div class="zone-price" style="color:#ef6c00">$25</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(4)">
+        <div class="zone-swatch" style="background:#c62828"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 5 - Sekotong Peninsula</div>
+          <div class="zone-places">Desert Point, Labuhanpon, Secret Gilis</div>
+        </div>
+        <div class="zone-price" style="color:#c62828">$30</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(5)">
+        <div class="zone-swatch" style="background:#6a1b9a"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 6 - Ekas Peninsula and Far Southeast</div>
+          <div class="zone-places">Awang Bay, Ekas Bay, Telong Elong</div>
+        </div>
+        <div class="zone-price" style="color:#6a1b9a">$30</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(6)">
+        <div class="zone-swatch" style="background:#00695c"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 7 - Tanjung Ringgit and Far East Coast</div>
+          <div class="zone-places">Tanjung Ringgit, Pink Beach, Selong</div>
+        </div>
+        <div class="zone-price" style="color:#00695c">$40</div>
+      </div>
+
+      <div class="zone-item" onclick="flyToZone(7)">
+        <div class="zone-swatch" style="background:#4e342e"></div>
+        <div class="zone-info">
+          <div class="zone-name">Zone 8 - National Park (TNGR)</div>
+          <div class="zone-places">Mount Rinjani National Park</div>
+        </div>
+        <div class="zone-price" style="color:#4e342e">POA</div>
+      </div>
+
+      <div class="landmark-section">
+        <div class="section-label">Key Locations</div>
+        <div class="lm-item"><span class="lm-icon">⛰️</span>Senaru - RDA Base and Trek Start</div>
+        <div class="lm-item"><span class="lm-icon">🏕️</span>Sembalun Lawang - Trek Start</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      Surcharge per group, one-way to Senaru. Gili Islands by private speed boat.<br>
+      <a href="https://rinjanidawnadventures.com/contact-rinjani-dawn-adventures-lombok/" target="_blank">Contact Rinjani Dawn Adventures</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<button id="sidebar-toggle" onclick="toggleSidebar()">📍 Zones and Legend</button>
+
+<script>
+var map, searchPin = null, polygonObjs = [], iwObjs = [], autocomplete;
+
+var ZONES = [
+  {
+    id:5, name:"Zone 5 - Sekotong Peninsula", price:"$30", usd:30,
+    color:"#c62828", fillOpacity:0.2, strokeWeight:1.8,
+    title:"Zone 5 - Sekotong Peninsula",
+    priceLabel:"$30 USD",
+    body:"One-way pickup or dropoff surcharge per group.",
+    places:"Sekotong Peninsula including Desert Point, Labuhanpon, Bangko Bangko, Tembowong Harbour (Secret Gilis), and surrounding west coast areas.",
+    paths:[[
+      {lat:-8.8508924,lng:116.0525372},{lat:-8.7623416,lng:116.0473874},{lat:-8.7647168,lng:116.0393193},
+      {lat:-8.751144,lng:116.0372594},{lat:-8.7452057,lng:116.0472157},{lat:-8.7338379,lng:116.0430959},
+      {lat:-8.7273904,lng:116.0484174},{lat:-8.7207731,lng:116.0454991},{lat:-8.7209427,lng:116.0312512},
+      {lat:-8.7289175,lng:116.026788},{lat:-8.7367223,lng:116.0276463},{lat:-8.7492777,lng:116.0118535},
+      {lat:-8.726542,lng:115.9871343},{lat:-8.7294594,lng:115.9829802},{lat:-8.7337012,lng:115.9819502},
+      {lat:-8.7313258,lng:115.9694189},{lat:-8.7258963,lng:115.9666723},{lat:-8.7279324,lng:115.9620375},
+      {lat:-8.7345496,lng:115.9646124},{lat:-8.7438813,lng:115.9474462},{lat:-8.7518556,lng:115.9390348},
+      {lat:-8.7564364,lng:115.9409231},{lat:-8.766107,lng:115.9345716},{lat:-8.7666159,lng:115.9198088},
+      {lat:-8.7732324,lng:115.9163755},{lat:-8.7606779,lng:115.8981794},{lat:-8.7472746,lng:115.9031576},
+      {lat:-8.7437117,lng:115.8952612},{lat:-8.7601689,lng:115.8882231},{lat:-8.7627138,lng:115.8853048},
+      {lat:-8.7605083,lng:115.8830732},{lat:-8.7535522,lng:115.8837599},{lat:-8.747105,lng:115.8746618},
+      {lat:-8.7438813,lng:115.8683104},{lat:-8.7393003,lng:115.8659071},{lat:-8.7277627,lng:115.8726019},
+      {lat:-8.7204667,lng:115.8677954},{lat:-8.7183373,lng:115.8515005},{lat:-8.7269908,lng:115.8367376},
+      {lat:-8.7393768,lng:115.8358793},{lat:-8.7514231,lng:115.8193998},{lat:-8.7573612,lng:115.8223181},
+      {lat:-8.7631296,lng:115.8204298},{lat:-8.779586,lng:115.8279829},{lat:-8.7957024,lng:115.8240347},
+      {lat:-8.817416,lng:115.8309011},{lat:-8.8165679,lng:115.844634},{lat:-8.8208087,lng:115.8413725},
+      {lat:-8.8264065,lng:115.8437757},{lat:-8.8272546,lng:115.8511572},{lat:-8.8219961,lng:115.8683233},
+      {lat:-8.8320042,lng:115.8787946},{lat:-8.8291205,lng:115.8873777},{lat:-8.851341,lng:115.9223966},
+      {lat:-8.8386195,lng:115.9237699},{lat:-8.835227,lng:115.9306364},{lat:-8.8450651,lng:115.944026},
+      {lat:-8.8510018,lng:115.9423094},{lat:-8.8647405,lng:115.9596472},{lat:-8.8699984,lng:115.9558706},
+      {lat:-8.9110414,lng:116.0116606},{lat:-8.9052753,lng:116.0267668},{lat:-8.8984915,lng:116.0238485},
+      {lat:-8.8939124,lng:116.0183553},{lat:-8.8915381,lng:116.0202436},{lat:-8.893234,lng:116.0247068},
+      {lat:-8.8832276,lng:116.0310583},{lat:-8.874917,lng:116.0233335},{lat:-8.8722033,lng:116.0108022},
+      {lat:-8.8659278,lng:116.0118322},{lat:-8.8589737,lng:116.0302},{lat:-8.8677935,lng:116.0355215},
+      {lat:-8.8605002,lng:116.0480528},{lat:-8.8550726,lng:116.0483961},{lat:-8.8508924,lng:116.0525372}
+    ]]
+  },
+  {
+    id:1, name:"Zone 1 - Free Pickup and Dropoff", price:"FREE", usd:0,
+    color:"#2e7d32", fillOpacity:0.13, strokeWeight:1.8,
+    title:"Zone 1 - Free Pickup and Dropoff",
+    priceLabel:"FREE",
+    body:"Pickup and dropoff is included in your trek price. No surcharge applies.",
+    places:"Most of North and East Lombok, including Senaru, Bangsal Harbour, Senggigi, Mangsit, Mataram, Praya Airport (LOP), Sembalun Lawang.",
+    paths:[[
+      {lat:-8.353418,lng:116.1346352},{lat:-8.3555568,lng:116.1213104},{lat:-8.3660867,lng:116.1185638},
+      {lat:-8.3592932,lng:116.112384},{lat:-8.3579345,lng:116.100711},{lat:-8.3599726,lng:116.0955612},
+      {lat:-8.3840887,lng:116.1020843},{lat:-8.4014107,lng:116.0790817},{lat:-8.3993728,lng:116.0694687},
+      {lat:-8.401071,lng:116.0519592},{lat:-8.4425048,lng:116.0279266},{lat:-8.4818966,lng:116.0258667},
+      {lat:-8.528075,lng:116.0629455},{lat:-8.6054793,lng:116.0704986},{lat:-8.6645403,lng:116.067752},
+      {lat:-8.7286823,lng:116.0526458},{lat:-8.7615974,lng:116.0598556},{lat:-8.7623416,lng:116.0473874},
+      {lat:-8.776527,lng:116.0656921},{lat:-8.8023131,lng:116.2287704},{lat:-8.8033719,lng:116.2944333},
+      {lat:-8.5103185,lng:116.3777077},{lat:-8.4987739,lng:116.3626015},{lat:-8.4736462,lng:116.3420021},
+      {lat:-8.4410456,lng:116.3289559},{lat:-8.3887431,lng:116.3193428},{lat:-8.3473037,lng:116.3317024},
+      {lat:-8.3194484,lng:116.3543617},{lat:-8.3221661,lng:116.4161598},{lat:-8.3276014,lng:116.485511},
+      {lat:-8.3568148,lng:116.4882576},{lat:-8.4118386,lng:116.5273964},{lat:-8.4885872,lng:116.4903175},
+      {lat:-8.5368019,lng:116.5692818},{lat:-8.5361229,lng:116.659919},{lat:-8.5198256,lng:116.6667854},
+      {lat:-8.5055649,lng:116.6860115},{lat:-8.4777211,lng:116.6805184},{lat:-8.4498752,lng:116.7169106},
+      {lat:-8.4159141,lng:116.714164},{lat:-8.3996118,lng:116.725837},{lat:-8.3710809,lng:116.7306435},
+      {lat:-8.3418687,lng:116.7210304},{lat:-8.3330366,lng:116.6983711},{lat:-8.295668,lng:116.6736519},
+      {lat:-8.2773222,lng:116.6324532},{lat:-8.2786811,lng:116.6043007},{lat:-8.2460643,lng:116.5315163},
+      {lat:-8.2508211,lng:116.5143501},{lat:-8.2243182,lng:116.475898},{lat:-8.2039301,lng:116.3529884},
+      {lat:-8.2460643,lng:116.2506783},{lat:-8.353418,lng:116.1346352}
+    ]]
+  },
+  {
+    id:4, name:"Zone 4 - South Coast", price:"$25", usd:25,
+    color:"#ef6c00", fillOpacity:0.18, strokeWeight:1.8,
+    title:"Zone 4 - South Coast",
+    priceLabel:"$25 USD",
+    body:"One-way pickup or dropoff surcharge per group.",
+    places:"Blongas Bay, Mawun, Selong Belanak, Kuta (Koeta) south coast strip and surrounding areas.",
+    paths:[[
+      {lat:-8.7623416,lng:116.0473874},{lat:-8.8508924,lng:116.0525372},{lat:-8.8529355,lng:116.0604594},
+      {lat:-8.856667,lng:116.061661},{lat:-8.8561582,lng:116.0645792},{lat:-8.858872,lng:116.0719607},
+      {lat:-8.8620947,lng:116.0693858},{lat:-8.8624339,lng:116.0566828},{lat:-8.8661653,lng:116.0493014},
+      {lat:-8.8698967,lng:116.0431216},{lat:-8.8860092,lng:116.0482714},{lat:-8.8871964,lng:116.052048},
+      {lat:-8.8846524,lng:116.0554812},{lat:-8.8851612,lng:116.0683558},{lat:-8.89415,lng:116.0721323},
+      {lat:-8.8992378,lng:116.0791705},{lat:-8.8799035,lng:116.0807154},{lat:-8.8748154,lng:116.0838053},
+      {lat:-8.871932,lng:116.103718},{lat:-8.874985,lng:116.1076662},{lat:-8.8693879,lng:116.1150477},
+      {lat:-8.8724409,lng:116.1411402},{lat:-8.86413,lng:116.1497233},{lat:-8.8670134,lng:116.1565897},
+      {lat:-8.8751546,lng:116.159508},{lat:-8.8537836,lng:116.1830256},{lat:-8.8483558,lng:116.1852572},
+      {lat:-8.8383482,lng:116.1984751},{lat:-8.833938,lng:116.1976168},{lat:-8.8295277,lng:116.2001917},
+      {lat:-8.8169751,lng:116.2213061},{lat:-8.8073059,lng:116.2274859},{lat:-8.8018775,lng:116.2264559},
+      {lat:-8.776527,lng:116.0656921},{lat:-8.7623416,lng:116.0473874}
+    ]]
+  },
+  {
+    id:3, name:"Zone 3 - South and East Lombok", price:"$20", usd:20,
+    color:"#f9a825", fillOpacity:0.18, strokeWeight:1.8,
+    title:"Zone 3 - South and East Lombok",
+    priceLabel:"$20 USD",
+    body:"One-way pickup or dropoff surcharge per group.",
+    places:"Kuta (Koeta), Gerupuk, Sengkol, Praya, and surrounding south and central Lombok areas.",
+    paths:[[
+      {lat:-8.5103185,lng:116.3777077},{lat:-8.8033719,lng:116.2944333},{lat:-8.8018775,lng:116.2264559},
+      {lat:-8.8073059,lng:116.2274859},{lat:-8.8169751,lng:116.2213061},{lat:-8.8295277,lng:116.2001917},
+      {lat:-8.833938,lng:116.1976168},{lat:-8.8383482,lng:116.1984751},{lat:-8.8483558,lng:116.1852572},
+      {lat:-8.8537836,lng:116.1830256},{lat:-8.8751546,lng:116.159508},{lat:-8.8788227,lng:116.1552466},
+      {lat:-8.887642,lng:116.1583365},{lat:-8.8961219,lng:116.15353},{lat:-8.9008706,lng:116.1614264},
+      {lat:-8.9096894,lng:116.1576498},{lat:-8.9191863,lng:116.1957587},{lat:-8.9117244,lng:116.2039984},
+      {lat:-8.9049408,lng:116.1988486},{lat:-8.9025665,lng:116.2091482},{lat:-8.9086718,lng:116.216358},
+      {lat:-8.9103677,lng:116.2263144},{lat:-8.90528,lng:116.2297476},{lat:-8.9012098,lng:116.2263144},
+      {lat:-8.9022273,lng:116.2311209},{lat:-8.9051104,lng:116.2328375},{lat:-8.9146075,lng:116.2323225},
+      {lat:-8.9171513,lng:116.2342108},{lat:-8.914777,lng:116.2462271},{lat:-8.9051104,lng:116.2446821},
+      {lat:-8.9032449,lng:116.2477721},{lat:-8.9046016,lng:116.2518919},{lat:-8.9137595,lng:116.2781561},
+      {lat:-8.9027361,lng:116.2757529},{lat:-8.8995138,lng:116.2776411},{lat:-8.8954435,lng:116.2757529},
+      {lat:-8.8945955,lng:116.281246},{lat:-8.8978179,lng:116.2906874},{lat:-8.901549,lng:116.2905157},
+      {lat:-8.9062976,lng:116.2961806},{lat:-8.9103677,lng:116.2965239},{lat:-8.912742,lng:116.2999571},
+      {lat:-8.9079935,lng:116.3059653},{lat:-8.9107069,lng:116.3140333},{lat:-8.9190167,lng:116.3190115},
+      {lat:-8.9229172,lng:116.3193548},{lat:-8.9191863,lng:116.3233031},{lat:-8.9170665,lng:116.3247622},
+      {lat:-8.915625,lng:116.3233889},{lat:-8.9135899,lng:116.3206423},{lat:-8.9114701,lng:116.3203848},
+      {lat:-8.9087566,lng:116.3232172},{lat:-8.9091806,lng:116.3275946},{lat:-8.911894,lng:116.3303412},
+      {lat:-8.9136747,lng:116.331457},{lat:-8.9158794,lng:116.330427},{lat:-8.9163881,lng:116.3291395},
+      {lat:-8.918084,lng:116.3288821},{lat:-8.9192711,lng:116.3291395},{lat:-8.9203734,lng:116.331457},
+      {lat:-8.9157098,lng:116.3332594},{lat:-8.9168969,lng:116.3366926},{lat:-8.9184232,lng:116.3369501},
+      {lat:-8.9214757,lng:116.341585},{lat:-8.9259766,lng:116.3402911},{lat:-8.9316576,lng:116.3487025},
+      {lat:-8.9263158,lng:116.3520499},{lat:-8.9204652,lng:116.3475009},{lat:-8.9156319,lng:116.3501616},
+      {lat:-8.9138513,lng:116.3462993},{lat:-8.9105443,lng:116.3462993},{lat:-8.9027431,lng:116.3396903},
+      {lat:-8.8980792,lng:116.3459559},{lat:-8.8656851,lng:116.3886138},{lat:-8.8583918,lng:116.3927337},
+      {lat:-8.8573741,lng:116.4004584},{lat:-8.8619536,lng:116.4044925},{lat:-8.8505046,lng:116.4094706},
+      {lat:-8.8433806,lng:116.4107581},{lat:-8.8286233,lng:116.4256926},{lat:-8.8435503,lng:116.4372798},
+      {lat:-8.840073,lng:116.4434596},{lat:-8.8329488,lng:116.4444896},{lat:-8.8318462,lng:116.4458629},
+      {lat:-8.8348147,lng:116.4544459},{lat:-8.830574,lng:116.4607974},{lat:-8.8242978,lng:116.4633723},
+      {lat:-8.8074546,lng:116.4878873},{lat:-8.8106777,lng:116.4942388},{lat:-8.8067761,lng:116.5024785},
+      {lat:-8.8016869,lng:116.5029935},{lat:-8.7938834,lng:116.5086583},{lat:-8.7896423,lng:116.5059117},
+      {lat:-8.7774276,lng:116.5141515},{lat:-8.7799724,lng:116.5217046},{lat:-8.7706415,lng:116.5263394},
+      {lat:-8.7572386,lng:116.5443639},{lat:-8.7394238,lng:116.5551785},{lat:-8.7297526,lng:116.5536336},
+      {lat:-8.7212689,lng:116.5575818},{lat:-8.7014162,lng:116.5744046},{lat:-8.6703168,lng:116.5866823},
+      {lat:-8.6586074,lng:116.6007586},{lat:-8.6440125,lng:116.6098566},{lat:-8.625786,lng:116.6226977},
+      {lat:-8.6097472,lng:116.6258734},{lat:-8.6012658,lng:116.6289616},{lat:-8.5666391,lng:116.6674137},
+      {lat:-8.5544172,lng:116.670847},{lat:-8.5361229,lng:116.659919},{lat:-8.5368019,lng:116.5692818},
+      {lat:-8.4885872,lng:116.4903175},{lat:-8.5103185,lng:116.3777077}
+    ]]
+  },
+  {
+    id:6, name:"Zone 6 - Ekas Peninsula and Far Southeast", price:"$30", usd:30,
+    color:"#6a1b9a", fillOpacity:0.22, strokeWeight:1.8,
+    title:"Zone 6 - Ekas Peninsula and Far Southeast",
+    priceLabel:"$30 USD",
+    body:"One-way pickup or dropoff surcharge per group.",
+    places:"Ekas Peninsula including Awang Bay, Ekas Bay, Telong Elong, and surrounding far southeast Lombok areas.",
+    paths:[[
+      {lat:-8.8980792,lng:116.3459559},{lat:-8.901252,lng:116.3477194},{lat:-8.9024391,lng:116.3506376},
+      {lat:-8.9054918,lng:116.3487493},{lat:-8.9078661,lng:116.3528692},{lat:-8.9046438,lng:116.3554441},
+      {lat:-8.9107491,lng:116.359049},{lat:-8.9107491,lng:116.3672888},{lat:-8.9053222,lng:116.3736402},
+      {lat:-8.9070181,lng:116.3784467},{lat:-8.9127842,lng:116.3779318},{lat:-8.9248248,lng:116.3645422},
+      {lat:-8.9319472,lng:116.3652288},{lat:-8.9480569,lng:116.3683187},{lat:-8.9536528,lng:116.3616239},
+      {lat:-8.9556876,lng:116.3698637},{lat:-8.9560267,lng:116.3736402},{lat:-8.955518,lng:116.3835966},
+      {lat:-8.9506005,lng:116.3889181},{lat:-8.9546702,lng:116.393038},{lat:-8.9511092,lng:116.3976728},
+      {lat:-8.9324559,lng:116.3992178},{lat:-8.9248248,lng:116.3949262},{lat:-8.9121058,lng:116.3997328},
+      {lat:-8.9066789,lng:116.4007627},{lat:-8.8987081,lng:116.4069425},{lat:-8.8927722,lng:116.401621},
+      {lat:-8.8854794,lng:116.3992178},{lat:-8.8734375,lng:116.3962995},{lat:-8.8664836,lng:116.3870298},
+      {lat:-8.8980792,lng:116.3459559}
+    ]]
+  },
+  {
+    id:7, name:"Zone 7 - Tanjung Ringgit and Far East Coast", price:"$40", usd:40,
+    color:"#00695c", fillOpacity:0.2, strokeWeight:1.8,
+    title:"Zone 7 - Tanjung Ringgit and Far East Coast",
+    priceLabel:"$40 USD",
+    body:"One-way pickup or dropoff surcharge per group.",
+    places:"Tanjung Ringgit, Pink Beach, Selong, Labuhan Haji, and surrounding far east Lombok areas.",
+    paths:[[
+      {lat:-8.8251453,lng:116.4690421},{lat:-8.8273505,lng:116.4690421},{lat:-8.8332874,lng:116.4647505},
+      {lat:-8.836171,lng:116.4669821},{lat:-8.8376976,lng:116.472647},{lat:-8.8458395,lng:116.4681838},
+      {lat:-8.8497407,lng:116.4587424},{lat:-8.857543,lng:116.4566825},{lat:-8.8631403,lng:116.4587424},
+      {lat:-8.8731472,lng:116.4520476},{lat:-8.9001137,lng:116.4463828},{lat:-8.9031664,lng:116.4398596},
+      {lat:-8.914529,lng:116.4292166},{lat:-8.917412,lng:116.4304183},{lat:-8.921482,lng:116.4383147},
+      {lat:-8.921482,lng:116.4417479},{lat:-8.9231779,lng:116.4551375},{lat:-8.9199557,lng:116.4580557},
+      {lat:-8.921482,lng:116.4752219},{lat:-8.9143594,lng:116.4886115},{lat:-8.9091021,lng:116.5007994},
+      {lat:-8.8994353,lng:116.5038893},{lat:-8.8919731,lng:116.5092108},{lat:-8.8867155,lng:116.5097258},
+      {lat:-8.8814579,lng:116.513159},{lat:-8.8843411,lng:116.5184806},{lat:-8.8895987,lng:116.5195105},
+      {lat:-8.897061,lng:116.514704},{lat:-8.9006225,lng:116.5165923},{lat:-8.9018097,lng:116.5219138},
+      {lat:-8.9102893,lng:116.5114424},{lat:-8.9126635,lng:116.5074942},{lat:-8.9148682,lng:116.5073226},
+      {lat:-8.916564,lng:116.5102408},{lat:-8.916564,lng:116.5145323},{lat:-8.9104588,lng:116.5229437},
+      {lat:-8.9097805,lng:116.5284369},{lat:-8.9067279,lng:116.5308402},{lat:-8.9060495,lng:116.5351317},
+      {lat:-8.904184,lng:116.5380499},{lat:-8.9046927,lng:116.5411399},{lat:-8.9011313,lng:116.5428565},
+      {lat:-8.9014705,lng:116.5483496},{lat:-8.8992658,lng:116.5538428},{lat:-8.8996049,lng:116.557276},
+      {lat:-8.8899379,lng:116.5727255},{lat:-8.8789138,lng:116.5749571},{lat:-8.8762001,lng:116.5775321},
+      {lat:-8.872808,lng:116.5768454},{lat:-8.8714511,lng:116.5885184},{lat:-8.865006,lng:116.5862868},
+      {lat:-8.8651756,lng:116.5904067},{lat:-8.8670413,lng:116.5936682},{lat:-8.8590696,lng:116.5967581},
+      {lat:-8.8548292,lng:116.5880034},{lat:-8.8499103,lng:116.5612242},{lat:-8.855338,lng:116.5533278},
+      {lat:-8.855338,lng:116.5421698},{lat:-8.8436344,lng:116.548693},{lat:-8.837528,lng:116.5419982},
+      {lat:-8.8304038,lng:116.5433715},{lat:-8.8217527,lng:116.5246604},{lat:-8.8354925,lng:116.5112708},
+      {lat:-8.8400724,lng:116.5071509},{lat:-8.8422774,lng:116.504061},{lat:-8.8463483,lng:116.5020011},
+      {lat:-8.8526242,lng:116.5076659},{lat:-8.8551684,lng:116.5081809},{lat:-8.8572038,lng:116.504061},
+      {lat:-8.8475357,lng:116.4947913},{lat:-8.8436344,lng:116.4980528},{lat:-8.8405812,lng:116.4994261},
+      {lat:-8.8366799,lng:116.4968512},{lat:-8.8288771,lng:116.5021727},{lat:-8.8254846,lng:116.4999411},
+      {lat:-8.820226,lng:116.5020011},{lat:-8.8095391,lng:116.5016577},{lat:-8.8106777,lng:116.4942388},
+      {lat:-8.8074546,lng:116.4878873},{lat:-8.8239579,lng:116.4650939},{lat:-8.8251453,lng:116.4690421}
+    ]]
+  },
+  {
+    id:8, name:"Zone 8 - National Park (TNGR)", price:"POA", usd:-1,
+    color:"#4e342e", fillOpacity:0.15, strokeWeight:1.8,
+    title:"Zone 8 - National Park (TNGR)",
+    priceLabel:"POA",
+    body:"This zone covers Mount Rinjani National Park. Special permits and arrangements are required. Please contact us directly to discuss your requirements.",
+    places:"Mount Rinjani National Park (TNGR).",
+    paths:[[
+      {lat:-8.5109977,lng:116.3780509},{lat:-8.4892664,lng:116.4906609},{lat:-8.4125178,lng:116.5277399},
+      {lat:-8.357494,lng:116.488601},{lat:-8.3282806,lng:116.4858544},{lat:-8.3201276,lng:116.3547049},
+      {lat:-8.3455349,lng:116.332551},{lat:-8.3873143,lng:116.3191614},{lat:-8.4392775,lng:116.3280878},
+      {lat:-8.4743254,lng:116.3423453},{lat:-8.4956479,lng:116.3593303},{lat:-8.5078718,lng:116.3723765},
+      {lat:-8.5109977,lng:116.3780509}
+    ]]
+  },
+  {
+    id:2, name:"Zone 2 - Gili Islands", price:"$30", usd:30,
+    color:"#0277bd", fillOpacity:0.2, strokeWeight:1.8,
+    title:"Zone 2 - Gili Islands",
+    priceLabel:"$30 USD",
+    body:"Private speedboat pickup or dropoff, one-way to Bangsal Harbour or Teluk Nera Harbour.",
+    places:"Gili Trawangan, Gili Air, Gili Meno.",
+    paths:[[
+      {lat:-8.3419918,lng:116.0251638},{lat:-8.3606743,lng:116.029112},{lat:-8.3639012,lng:116.0358068},
+      {lat:-8.3598251,lng:116.051943},{lat:-8.3674678,lng:116.0782072},{lat:-8.3696756,lng:116.0898802},
+      {lat:-8.3577871,lng:116.0909101},{lat:-8.3489554,lng:116.0874769},{lat:-8.3399537,lng:116.0586378},
+      {lat:-8.3419918,lng:116.0445616},{lat:-8.3360472,lng:116.0387251},{lat:-8.3411426,lng:116.0272238},
+      {lat:-8.3419918,lng:116.0251638}
+    ]]
+  }
+];
+
+var ZONE_VIEWS = [
+  {lat:-8.42,lng:116.28,zoom:9},
+  {lat:-8.352,lng:116.06,zoom:12},
+  {lat:-8.72,lng:116.42,zoom:10},
+  {lat:-8.855,lng:116.13,zoom:11},
+  {lat:-8.80,lng:115.92,zoom:10},
+  {lat:-8.935,lng:116.38,zoom:12},
+  {lat:-8.86,lng:116.56,zoom:11},
+  {lat:-8.42,lng:116.42,zoom:10}
+];
+
+var LANDMARKS = [
+  {name:"Senaru - RDA Base", lat:-8.3033, lng:116.4010, type:"rda", icon:"⛰️", desc:"Rinjani Dawn Adventures - all treks start here"},
+  {name:"Sembalun Lawang",   lat:-8.3469, lng:116.4958, type:"town",icon:"🏕️", desc:"Trek start for Sembalun-side routes"}
+];
+
+var MARKER_COLORS = {rda:"#66bb6a", town:"#ffd54f"};
+var MARKER_SIZES  = {rda:40, town:28};
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center:{lat:-8.56, lng:116.20}, zoom:10,
+    mapTypeId:"roadmap",
+    mapTypeControl:true,
+    mapTypeControlOptions:{
+      style:google.maps.MapTypeControlStyle.FLAT,
+      position:google.maps.ControlPosition.TOP_RIGHT,
+      mapTypeIds:["roadmap","terrain","satellite","hybrid"]
+    },
+    fullscreenControl:true,
+    streetViewControl:false,
+    zoomControlOptions:{position:google.maps.ControlPosition.RIGHT_CENTER},
+    styles:[
+      {featureType:"water",elementType:"geometry",stylers:[{color:"#a8d8ea"}]},
+      {featureType:"landscape",elementType:"geometry",stylers:[{color:"#e8f5e9"}]},
+      {featureType:"poi.park",elementType:"geometry",stylers:[{color:"#c8e6c9"}]},
+      {featureType:"road.highway",elementType:"geometry",stylers:[{color:"#ffcc80"},{weight:1.5}]},
+      {featureType:"road.arterial",elementType:"geometry",stylers:[{color:"#fff9c4"},{weight:1}]},
+      {featureType:"administrative.locality",elementType:"labels.text.fill",stylers:[{color:"#1b5e20"}]},
+      {featureType:"administrative.locality",elementType:"labels.text.stroke",stylers:[{color:"#ffffff"},{weight:3}]},
+      {featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}
+    ]
+  });
+
+  initSearch();
+  drawZones();
+  plotLandmarks();
+}
+
+function initSearch() {
+  var input = document.getElementById("pac-input");
+  autocomplete = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: {country: "id"},
+    fields: ["geometry", "name"]
+  });
+  autocomplete.addListener("place_changed", function() {
+    var place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) return;
+    handlePlaceSelect(place.geometry.location, place.name);
+  });
+}
+
+function handlePlaceSelect(location, name) {
+  if (searchPin) searchPin.setMap(null);
+  searchPin = new google.maps.Marker({
+    position: location,
+    map: map,
+    icon: {path:google.maps.SymbolPath.CIRCLE, scale:9, fillColor:"#d4a843", fillOpacity:1, strokeColor:"#fff", strokeWeight:2},
+    animation: google.maps.Animation.DROP,
+    zIndex: 200
+  });
+  map.panTo(location);
+  map.setZoom(13);
+
+  var zone = detectZone(location);
+  var el = document.getElementById("zone-result");
+  el.style.display = "block";
+  if (zone) {
+    el.className = zone.usd === 0 ? "free" : "paid";
+    document.getElementById("zr-name").textContent = zone.usd === 0
+      ? "Your location is in " + zone.name
+      : "Your location is in " + zone.name;
+    document.getElementById("zr-price").textContent = zone.usd === 0
+      ? "No surcharge - pickup and dropoff included in your trek price."
+      : "Pickup or dropoff surcharge: " + zone.price + " USD per group (one-way).";
+    document.getElementById("zr-note").textContent = zone.usd === 0
+      ? ""
+      : "Contact RDA to confirm and arrange.";
+  } else {
+    el.className = "unknown";
+    document.getElementById("zr-name").textContent = name || "Your location";
+    document.getElementById("zr-price").textContent = "Location is outside our mapped zones.";
+    document.getElementById("zr-note").textContent = "Please contact RDA directly to confirm your pickup.";
+  }
+}
+
+function drawZones() {
+  for (var i = 0; i < ZONES.length; i++) {
+    (function(z) {
+      for (var j = 0; j < z.paths.length; j++) {
+        var poly = new google.maps.Polygon({
+          paths: z.paths[j],
+          map: map,
+          strokeColor: z.color,
+          strokeOpacity: 0.75,
+          strokeWeight: z.strokeWeight,
+          fillColor: z.color,
+          fillOpacity: z.fillOpacity,
+          zIndex: 1
+        });
+        (function(polygon, zone) {
+          polygon.addListener("click", function(e) {
+            showZoneIW(zone, e.latLng);
+          });
+        })(poly, z);
+        polygonObjs.push(poly);
+      }
+
+      var lp = zoneLabelPos(z.id);
+      if (lp) {
+        new google.maps.Marker({
+          position: lp,
+          map: map,
+          icon: {path:google.maps.SymbolPath.CIRCLE, scale:0},
+          label: {
+            text: "Zone " + z.id,
+            color: z.color,
+            fontFamily: "'Cormorant Garamond', serif",
+            fontWeight: "800",
+            fontSize: "18px"
+          },
+          zIndex: 2
+        });
+      }
+    })(ZONES[i]);
+  }
+}
+
+function zoneLabelPos(id) {
+  var positions = {
+    1:{lat:-8.42,  lng:116.28},
+    2:{lat:-8.352, lng:116.06},
+    3:{lat:-8.72,  lng:116.42},
+    4:{lat:-8.855, lng:116.13},
+    5:{lat:-8.80,  lng:115.92},
+    6:{lat:-8.935, lng:116.38},
+    7:{lat:-8.86,  lng:116.56},
+    8:{lat:-8.42,  lng:116.42}
+  };
+  return positions[id] || null;
+}
+
+function showZoneIW(zone, latLng) {
+  for (var i = 0; i < iwObjs.length; i++) { iwObjs[i].close(); }
+  iwObjs = [];
+  var contactHtml = "<div style='margin-top:10px;border-top:1px solid rgba(0,0,0,0.1);padding-top:8px;'>"
+    + "<div style='font-size:11px;color:#555;margin-bottom:4px;font-weight:600;'>Get in touch:</div>"
+    + "<div style='font-size:11px;color:#333;margin-bottom:2px;'>&#128241; Aef (Owner / Ops Manager)</div>"
+    + "<div style='font-size:12px;font-weight:700;color:#2d6a4f;margin-bottom:6px;'>+62 823-4101-1044</div>"
+    + "<div style='font-size:11px;color:#333;margin-bottom:2px;'>&#128241; Rizal (Booking / Experience Manager)</div>"
+    + "<div style='font-size:12px;font-weight:700;color:#2d6a4f;'>+62 823-4054-5410</div>"
+    + "</div>";
+  var headerStyle = "background:" + zone.color + ";padding:10px 14px 8px;border-radius:2px 2px 0 0;";
+  var titleStyle = "font-family:Georgia,serif;font-weight:800;font-size:17px;color:#fff;line-height:1.2;";
+  var priceStyle = "font-size:28px;font-weight:900;color:" + zone.color + ";line-height:1;margin-bottom:5px;";
+  var bodyStyle = "font-size:12px;color:#333;line-height:1.5;margin-bottom:6px;";
+  var placesStyle = "font-size:11px;color:#555;line-height:1.5;";
+  var content = "<div style='font-family:sans-serif;padding:0;margin:0;min-width:220px;max-width:260px;'>"
+    + "<div style='" + headerStyle + "'>"
+    + "<div style='" + titleStyle + "'>" + zone.title + "</div>"
+    + "</div>"
+    + "<div style='padding:10px 14px 12px;'>"
+    + "<div style='" + priceStyle + "'>" + zone.priceLabel + "</div>"
+    + "<div style='" + bodyStyle + "'>" + zone.body + "</div>"
+    + "<div style='" + placesStyle + "'>&#128205; " + zone.places + "</div>"
+    + contactHtml
+    + "</div>"
+    + "</div>";
+  var iw = new google.maps.InfoWindow({
+    content: content,
+    position: latLng
+  });
+  iw.open(map);
+  iwObjs.push(iw);
+}
+
+function plotLandmarks() {
+  for (var i = 0; i < LANDMARKS.length; i++) {
+    (function(lm) {
+      var col = MARKER_COLORS[lm.type] || "#fff";
+      var sz = MARKER_SIZES[lm.type] || 28;
+      var isRDA = lm.type === "rda";
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + sz + '" height="' + sz + '" viewBox="0 0 40 40">'
+        + '<circle cx="20" cy="20" r="' + (isRDA ? 18 : 14) + '" fill="' + col + '" opacity="0.22"/>'
+        + '<circle cx="20" cy="20" r="' + (isRDA ? 13 : 10) + '" fill="' + col + '" opacity="0.88"/>'
+        + (isRDA ? '<circle cx="20" cy="20" r="18" fill="none" stroke="' + col + '" stroke-width="2.5" opacity="0.55"/>' : '')
+        + '</svg>';
+      var marker = new google.maps.Marker({
+        position: {lat:lm.lat, lng:lm.lng},
+        map: map,
+        title: lm.name,
+        label: {text:lm.icon, fontSize:isRDA?"15px":"12px"},
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+          scaledSize: new google.maps.Size(sz, sz),
+          anchor: new google.maps.Point(sz/2, sz/2),
+          labelOrigin: new google.maps.Point(sz/2, sz/2)
+        },
+        zIndex: isRDA ? 100 : 10
+      });
+      var iw = new google.maps.InfoWindow({
+        content: '<div style="font-family:Jost,sans-serif;padding:5px 2px;min-width:155px;">'
+          + '<div style="font-size:13px;margin-bottom:2px;">' + lm.icon + ' <strong>' + lm.name + '</strong></div>'
+          + '<div style="font-size:11px;color:#666;line-height:1.4;">' + lm.desc + '</div>'
+          + (isRDA ? '<div style="margin-top:6px;"><a href="https://rinjanidawnadventures.com/contact-rinjani-dawn-adventures-lombok/" target="_blank" style="font-size:11px;color:#2d6a4f;font-weight:600;">Contact RDA to book</a></div>' : '')
+          + '</div>'
+      });
+      marker.addListener("click", function() {
+        for (var j = 0; j < iwObjs.length; j++) { iwObjs[j].close(); }
+        iwObjs = [];
+        iw.open(map, marker);
+        iwObjs.push(iw);
+      });
+    })(LANDMARKS[i]);
+  }
+}
+
+function detectZone(latLng) {
+  for (var i = 0; i < ZONES.length; i++) {
+    var z = ZONES[i];
+    for (var j = 0; j < z.paths.length; j++) {
+      var poly = new google.maps.Polygon({paths: z.paths[j]});
+      if (google.maps.geometry.poly.containsLocation(latLng, poly)) {
+        return z;
+      }
+    }
+  }
+  return null;
+}
+
+function flyToZone(i) {
+  var v = ZONE_VIEWS[i];
+  if (!v) return;
+  map.panTo({lat:v.lat, lng:v.lng});
+  map.setZoom(v.zoom);
+  var items = document.querySelectorAll(".zone-item");
+  for (var j = 0; j < items.length; j++) {
+    items[j].classList.toggle("active", j === i);
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+}
+</script>
+
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVz6Utx8qF_YwFWBMepCqy1Hfqza6U6WA&libraries=places,geometry&callback=initMap"></script>
+</body>
+</html>

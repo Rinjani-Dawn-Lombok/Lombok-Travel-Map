@@ -205,6 +205,7 @@
         <div class="section-label">Key Locations</div>
         <div class="lm-item"><span class="lm-icon">⛰️</span>Senaru - RDA Base and Trek Start</div>
         <div class="lm-item"><span class="lm-icon">🏕️</span>Sembalun Lawang - Trek Start</div>
+        <div class="lm-item"><span class="lm-icon">☕</span>Cafe Rinjani Dawn - Briefing and Storage</div>
       </div>
     </div>
 
@@ -459,11 +460,12 @@ var ZONE_VIEWS = [
 
 var LANDMARKS = [
   {name:"Senaru - RDA Base", lat:-8.3033, lng:116.4010, type:"rda", icon:"⛰️", desc:"Rinjani Dawn Adventures - all treks start here"},
-  {name:"Sembalun Lawang",   lat:-8.3469, lng:116.4958, type:"town",icon:"🏕️", desc:"Trek start for Sembalun-side routes"}
+  {name:"Sembalun Lawang",   lat:-8.3469, lng:116.4958, type:"town",icon:"🏕️", desc:"Trek start for Sembalun-side routes"},
+  {name:"Cafe Rinjani Dawn", lat:-8.29690, lng:116.40989, type:"cafe", icon:"☕", desc:"Pre-trek briefing, early breakfast, equipment issue and secure 24/7 storage facility"}
 ];
 
-var MARKER_COLORS = {rda:"#66bb6a", town:"#ffd54f"};
-var MARKER_SIZES  = {rda:40, town:28};
+var MARKER_COLORS = {rda:"#66bb6a", town:"#ffd54f", cafe:"#d4a843"};
+var MARKER_SIZES  = {rda:40, town:28, cafe:32};
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
@@ -605,7 +607,7 @@ function showZoneIW(zone, latLng) {
     + "<div style='font-size:11px;color:#555;margin-bottom:4px;font-weight:600;'>Get in touch:</div>"
     + "<div style='font-size:11px;color:#333;margin-bottom:2px;'>&#128241; Aef (Owner / Ops Manager)</div>"
     + "<div style='font-size:12px;font-weight:700;color:#2d6a4f;margin-bottom:6px;'>+62 823-4101-1044</div>"
-    + "<div style='font-size:11px;color:#333;margin-bottom:2px;'>&#128241; Rizal (Booking / Experience Manager)</div>"
+    + "<div style='font-size:11px;color:#333;margin-bottom:2px;'>&#128241; Caca (Booking and Customer Experience Manager)</div>"
     + "<div style='font-size:12px;font-weight:700;color:#2d6a4f;'>+62 823-4054-5410</div>"
     + "</div>";
   var headerStyle = "background:" + zone.color + ";padding:10px 14px 8px;border-radius:2px 2px 0 0;";
